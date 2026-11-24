@@ -1,22 +1,83 @@
+"""
+Title:        FB2 naming and storage engine
+Script Name:  rename_engine.py
+Description:  Build destination names and store FB2 books safely.
+Project:      fb2-renamer
+Author:       mp
+Date:         2026-11-23
+Version:      0.2.0
+"""
+
+import re
+import shutil
 from pathlib import Path
-from models import BookMetadata
+from zipfile import ZIP_DEFLATED, ZipFile
+
+from config import NO_AUTHOR_NAME, NO_SERIES_NAME, SERIES_NUMBER_WIDTH, SKIP_DUPLICATES
+from models import BookInfo, NamingMode
+
+INVALID_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+RESERVED_NAMES = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)), *(f"LPT{i}" for i in range(1, 10))}
 
 
-def build_filename(metadata: BookMetadata, template: str) -> str:
-    values = {
-        'author': metadata.safe_author,
-        'title': metadata.safe_title,
-        'series': metadata.series or '',
-        'seq': metadata.sequence or '',
-        'lang': metadata.language or '',
-    }
-    return template.format(**values).strip()
+def sanitize(value: str, fallback: str) -> str:
+    """Make a metadata value safe for common Windows filesystems."""
+    cleaned = INVALID_CHARS.sub("_", value).strip().rstrip(".")
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    if not cleaned:
+        cleaned = fallback
+    if cleaned.upper() in RESERVED_NAMES:
+        cleaned = f"_{cleaned}"
+    return cleaned
 
 
-def rename_file(source: Path, metadata: BookMetadata, template: str, force: bool = False, dry_run: bool = True) -> Path:
-    target = source.with_name(build_filename(metadata, template) + source.suffix)
-    if not dry_run:
-        if target.exists() and not force:
-            raise FileExistsError(target)
-        source.rename(target)
-    return target
+def build_filename(book: BookInfo) -> str:
+    """Build the book basename, adding a series number when available."""
+    title = sanitize(book.title, "Без названия")
+    if book.series_number is not None and book.series_number >= 0:
+        return f"{book.series_number:0{SERIES_NUMBER_WIDTH}d} - {title}"
+    return title
+
+
+def build_target_path(
+    book: BookInfo, book_root: Path, mode: NamingMode
+) -> Path:
+    """Build the final path for one book according to the selected mode."""
+    filename = build_filename(book)
+    series = sanitize(book.series or "", NO_SERIES_NAME)
+    author = sanitize(book.author, NO_AUTHOR_NAME)
+    zipped = mode in (NamingMode.REGULAR_ZIP, NamingMode.SERIES_ZIP)
+    extension = ".fb2.zip" if zipped else ".fb2"
+
+    if mode in (NamingMode.REGULAR_ZIP, NamingMode.REGULAR_FB2):
+        return book_root / author / series / f"{filename}{extension}"
+    return book_root / series / f"{filename}{extension}"
+
+
+def store_book(
+    source_fb2: Path,
+    book: BookInfo,
+    *,
+    book_root: Path,
+    mode: NamingMode,
+    dry_run: bool = False,
+) -> str:
+    """Store one book; return 'written', 'planned', or 'skipped'."""
+    target = build_target_path(book, book_root, mode)
+    if target.exists() and SKIP_DUPLICATES:
+        print(f"SKIP: {target}")
+        return "skipped"
+    if target.exists():
+        raise FileExistsError(f"Destination already exists: {target}")
+    if dry_run:
+        print(f"DRY RUN: {source_fb2} -> {target}")
+        return "planned"
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if mode in (NamingMode.REGULAR_FB2, NamingMode.SERIES_FB2):
+        shutil.copy2(source_fb2, target)
+    else:
+        with ZipFile(target, "x", compression=ZIP_DEFLATED) as archive:
+            archive.write(source_fb2, arcname=source_fb2.name)
+    print(f"OK: {target}")
+    return "written"
