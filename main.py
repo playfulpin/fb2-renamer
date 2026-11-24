@@ -1,32 +1,30 @@
 import argparse
-import shutil
-from pathlib import Path
-from config import TEMP_DIR
-from zip_processor import unpack_archive, find_fb2_files
-from fb2_parser import parse_fb2
-from rename_engine import store_book
 
-def prepare_temp():
-    shutil.rmtree(TEMP_DIR, ignore_errors=True)
-    TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
-def main():
-    parser=argparse.ArgumentParser()
-    parser.add_argument('archive')
-    args=parser.parse_args()
-    archive=Path(args.archive)
-    prepare_temp()
-    unpack_archive(archive, TEMP_DIR)
-    count=0
-    for fb2 in find_fb2_files(TEMP_DIR):
-        try:
-            store_book(fb2, parse_fb2(fb2))
-            count+=1
-        except Exception as ex:
-            print(f'ERROR: {fb2}
-{ex}')
-    print(f'Processed: {count}')
-    shutil.rmtree(TEMP_DIR, ignore_errors=True)
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog='fb2-renamer')
+
+    sub = parser.add_subparsers(dest='command', required=True)
+
+    info = sub.add_parser('info')
+    info.add_argument('file')
+
+    scan = sub.add_parser('scan')
+    scan.add_argument('path')
+    scan.add_argument('-r', '--recursive', action='store_true')
+    scan.add_argument('-v', '--verbose', action='store_true')
+    scan.add_argument('--template')
+
+    rename = sub.add_parser('rename')
+    rename.add_argument('path')
+    rename.add_argument('-r', '--recursive', action='store_true')
+    rename.add_argument('-v', '--verbose', action='store_true')
+    rename.add_argument('--template')
+    rename.add_argument('--force', action='store_true')
+
+    return parser
+
 
 if __name__ == '__main__':
-    main()
+    args = build_parser().parse_args()
+    print(args)

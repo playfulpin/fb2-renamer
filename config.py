@@ -1,9 +1,8 @@
-from pathlib import Path
-from models import NamingMode
+DEFAULT_TEMPLATE = "{author} - {title}"
 
-BOOK_ROOT = Path(r"C:\OPDSclient\Books")
-PROJECT_ROOT = Path(r"C:\OPDSclient\fb2-renamer")
-TEMP_DIR = PROJECT_ROOT / "temp"
-NO_SERIES_NAME = "Без серии"
-NAMING_MODE = NamingMode.REGULAR_ZIP
-SKIP_DUPLICATES = True
+SUPPORTED_EXTENSIONS = (
+    ".fb2",
+    ".fb2.zip",
+)
+
+INVALID_FILENAME_CHARS = '<>:"/\\|?*'
