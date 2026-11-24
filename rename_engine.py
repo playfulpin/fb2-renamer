@@ -5,7 +5,7 @@ Description:  Build destination names and store FB2 books safely.
 Project:      fb2-renamer
 Author:       mp
 Date:         2026-11-23
-Version:      0.2.0
+Version:      0.2.1
 """
 
 import re
@@ -13,7 +13,7 @@ import shutil
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
-from config import NO_AUTHOR_NAME, NO_SERIES_NAME, SERIES_NUMBER_WIDTH, SKIP_DUPLICATES
+from config import NO_AUTHOR_NAME, SERIES_NUMBER_WIDTH, SKIP_DUPLICATES
 from models import BookInfo, NamingMode
 
 INVALID_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
@@ -44,14 +44,20 @@ def build_target_path(
 ) -> Path:
     """Build the final path for one book according to the selected mode."""
     filename = build_filename(book)
-    series = sanitize(book.series or "", NO_SERIES_NAME)
+    series = sanitize(book.series, "") if book.series and book.series.strip() else ""
     author = sanitize(book.author, NO_AUTHOR_NAME)
     zipped = mode in (NamingMode.REGULAR_ZIP, NamingMode.SERIES_ZIP)
     extension = ".fb2.zip" if zipped else ".fb2"
 
     if mode in (NamingMode.REGULAR_ZIP, NamingMode.REGULAR_FB2):
-        return book_root / author / series / f"{filename}{extension}"
-    return book_root / series / f"{filename}{extension}"
+        target_dir = book_root / author
+    else:
+        target_dir = book_root
+
+    if series:
+        target_dir = target_dir / series
+
+    return target_dir / f"{filename}{extension}"
 
 
 def store_book(

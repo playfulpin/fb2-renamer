@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## [0.2.1] - 2026-11-23
+
+### Changed
+- Books without series metadata no longer use a placeholder directory; the series directory is omitted entirely.
+- Removed the obsolete `NO_SERIES_NAME` configuration setting.
+
 ## [0.2.0] - 2026-11-23
 
 ### Added

@@ -5,7 +5,7 @@ Description:  Unit tests for metadata parsing, naming, and ZIP safety.
 Project:      fb2-renamer
 Author:       mp
 Date:         2026-11-23
-Version:      0.2.0
+Version:      0.2.1
 """
 
 import tempfile
@@ -50,8 +50,20 @@ class FB2RenamerTests(unittest.TestCase):
     def test_missing_metadata_fallbacks(self):
         target = build_target_path(BookInfo("", ""), Path("/library"), NamingMode.REGULAR_FB2)
         self.assertIn("Неизвестный автор", str(target))
-        self.assertIn("Без серии", str(target))
+        self.assertEqual(target, Path("/library") / "Неизвестный автор" / "Без названия.fb2")
         self.assertIn("Без названия", str(target))
+
+    def test_missing_series_omits_series_directory(self):
+        book = BookInfo("Книга", "Автор", "", None)
+        root = Path("/library")
+        self.assertEqual(
+            build_target_path(book, root, NamingMode.REGULAR_ZIP),
+            root / "Автор" / "Книга.fb2.zip",
+        )
+        self.assertEqual(
+            build_target_path(book, root, NamingMode.SERIES_FB2),
+            root / "Книга.fb2",
+        )
 
     def test_windows_invalid_characters_are_replaced(self):
         self.assertEqual(sanitize('a:b?c', 'fallback'), 'a_b_c')

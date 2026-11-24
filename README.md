@@ -35,7 +35,6 @@ Edit `config.py`:
 | `TEMP_DIR` | Parent directory for temporary extraction | `<project>/temp` |
 | `NAMING_MODE` | Default output mode | `regular_zip` |
 | `SKIP_DUPLICATES` | Skip an existing destination rather than overwrite it | `True` |
-| `NO_SERIES_NAME` | Folder used when series metadata is absent | `Без серии` |
 | `NO_AUTHOR_NAME` | Folder used when author metadata is absent | `Неизвестный автор` |
 | `SERIES_NUMBER_WIDTH` | Minimum series-number width | `2` |
 
@@ -60,7 +59,7 @@ The input archive is a required positional argument. Supported modes:
 | `series_zip` | `BookRoot\Series\` | `NN - Title.fb2.zip` |
 | `series_fb2` | `BookRoot\Series\` | `NN - Title.fb2` |
 
-The `NN - ` prefix is omitted when no numeric series position is present. Books without series metadata use the `Без серии` folder. Missing author and title values receive safe fallback names. Multiple authors are joined with `; `.
+The `NN - ` prefix is omitted when no numeric series position is present. Books without series metadata do not get a series directory: regular mode places them directly under the author directory, while series mode places them directly under `BookRoot`. Missing author and title values receive safe fallback names. Multiple authors are joined with `; `.
 
 ## Processing behavior
 
