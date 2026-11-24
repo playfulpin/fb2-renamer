@@ -5,7 +5,7 @@ Description:  Build destination names and store FB2 books safely.
 Project:      fb2-renamer
 Author:       mp
 Date:         2026-11-23
-Version:      0.2.1
+Version:      0.2.2
 """
 
 import re
@@ -49,13 +49,15 @@ def build_target_path(
     zipped = mode in (NamingMode.REGULAR_ZIP, NamingMode.SERIES_ZIP)
     extension = ".fb2.zip" if zipped else ".fb2"
 
-    if mode in (NamingMode.REGULAR_ZIP, NamingMode.REGULAR_FB2):
-        target_dir = book_root / author
-    else:
-        target_dir = book_root
-
     if series:
-        target_dir = target_dir / series
+        # Series mode groups all books by series; regular mode keeps authors first.
+        if mode in (NamingMode.REGULAR_ZIP, NamingMode.REGULAR_FB2):
+            target_dir = book_root / author / series
+        else:
+            target_dir = book_root / series
+    else:
+        # Standalone books always belong inside their author's directory.
+        target_dir = book_root / author
 
     return target_dir / f"{filename}{extension}"
 

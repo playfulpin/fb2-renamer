@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## [0.2.2] - 2026-11-23
+
+### Changed
+- Books without series metadata are always stored directly under their author directory, including when a series naming mode is selected.
+- Updated naming tests and documentation to reflect the standalone-book directory rule.
+
 ## [0.2.1] - 2026-11-23
 
 ### Changed

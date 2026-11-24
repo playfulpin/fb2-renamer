@@ -59,7 +59,7 @@ The input archive is a required positional argument. Supported modes:
 | `series_zip` | `BookRoot\Series\` | `NN - Title.fb2.zip` |
 | `series_fb2` | `BookRoot\Series\` | `NN - Title.fb2` |
 
-The `NN - ` prefix is omitted when no numeric series position is present. Books without series metadata do not get a series directory: regular mode places them directly under the author directory, while series mode places them directly under `BookRoot`. Missing author and title values receive safe fallback names. Multiple authors are joined with `; `.
+The `NN - ` prefix is omitted when no numeric series position is present. Books with series metadata follow the selected directory layout. **Books without series metadata are always placed directly inside their author directory, regardless of the selected naming mode**; no series placeholder or empty series directory is created. Missing author and title values receive safe fallback names. Multiple authors are joined with `; `.
 
 ## Processing behavior
 
